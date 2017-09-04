@@ -14,15 +14,16 @@
 #define Regular_EdgeInset UIEdgeInsetsMake(8, 0, 0, 0)
 
 @interface MMGrowTextView ()<UITextViewDelegate>{
-    NSInteger m_maxLine;
-    NSMutableDictionary *m_attributes;
-    MMTextView *m_textView;
-    CGFloat m_cursorHeight;
-    CGFloat m_textViewMinHeight;
-    CGFloat m_originY;
+    NSInteger _maxLine;
+    NSMutableDictionary *_attributes;
+    MMTextView *_textView;
+    CGFloat _lineHeight;
+    CGFloat _textViewMinHeight;
+    CGFloat _originY;
+    CGFloat _preCursorTop;
+    BOOL _isMaxHeight;
     
 }
-@property (nonatomic, strong) NSMutableOrderedSet *orderedSet;
 @end
 
 @implementation MMGrowTextView
@@ -37,44 +38,41 @@
 }
 
 - (void)initialize{
-    m_maxLine = 5;
-    m_attributes = [NSMutableDictionary dictionary];
-    self.orderedSet = [NSMutableOrderedSet orderedSet];
+    _maxLine = 5;
+    _attributes = [NSMutableDictionary dictionary];
     
     CGRect rect = CGRectInset(self.bounds, 5, 5);
     rect.origin.x += 1;
-    m_textView = [[MMTextView alloc] initWithFrame:rect];
-    m_textView.backgroundColor = [UIColor grayColor];
+    _textView = [[MMTextView alloc] initWithFrame:CGRectMake(6, 4, 230, 34)];
+    _textView.returnKeyType = UIReturnKeySend;
+    _textView.delegate = self;
     
-    m_textView.textContainerInset = Regular_EdgeInset;
-    m_textView.textContainer.lineFragmentPadding = 0;
-    m_textView.returnKeyType = UIReturnKeySend;
-    m_textView.delegate = self;
-    m_attributes[NSFontAttributeName] = [UIFont systemFontOfSize:16];
+    _textView.textContainerInset = Regular_EdgeInset;
+    _textView.textContainer.lineFragmentPadding = 0;
+    _textView.contentInset = UIEdgeInsetsZero;
+    
+    _attributes[NSFontAttributeName] = [UIFont systemFontOfSize:16];
     NSMutableParagraphStyle *paragraph = [[NSMutableParagraphStyle alloc] init];
     paragraph.alignment = NSTextAlignmentNatural;
     paragraph.lineSpacing = 0;
-    m_attributes[NSParagraphStyleAttributeName] = paragraph;
-    m_attributes[NSForegroundColorAttributeName] = [UIColor blackColor];
-    m_textView.typingAttributes = m_attributes;
+    _attributes[NSParagraphStyleAttributeName] = paragraph;
+    _attributes[NSForegroundColorAttributeName] = [UIColor blackColor];
+    _textView.typingAttributes = _attributes;
     
-    [self addSubview:m_textView];
+    [self addSubview:_textView];
+    _textViewMinHeight = _textView.bounds.size.height;
     
+    UITextRange *startTextRange = [_textView characterRangeAtPoint:CGPointZero];
+    CGRect caretRect = [_textView caretRectForPosition:startTextRange.end];
+    _originY = caretRect.origin.y;
     
-    m_textViewMinHeight = m_textView.bounds.size.height;
-    
-    UITextRange *startTextRange = [m_textView characterRangeAtPoint:CGPointZero];
-    CGRect caretRect = [m_textView caretRectForPosition:startTextRange.end];
-    
-    m_originY = caretRect.origin.y;
-    m_cursorHeight = caretRect.size.height;
+    _lineHeight = _textView.font.lineHeight;
     
 
     
 
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleTextChanged:) name:UITextViewTextDidChangeNotification object:m_textView];
-    [self.orderedSet addObject:@(m_originY)];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleTextChanged:) name:UITextViewTextDidChangeNotification object:_textView];
     
 }
 - (void)dealloc{
@@ -82,8 +80,6 @@
     
 }
 - (void)handleTextChanged:(id)sender {
-    // 输入字符的时候，placeholder隐藏
-    
     MMTextView *textView = nil;
     
     if ([sender isKindOfClass:[NSNotification class]]) {
@@ -96,232 +92,106 @@
     }
     
     if (textView) {
+    
+        CGRect cursorFrame = [textView caretRectForPosition:textView.selectedTextRange.end];
+        CGPoint contentOffset = textView.contentOffset;
         
-        // 上一次光标位置
-        static CGFloat preCursorY = 0;
+        // 光标会时不时突出0.5个点
+        BOOL inLastLine = ABS(CGRectGetMaxY(cursorFrame) - textView.contentSize.height) < 1;
+        CGRect textViewframe = _textView.frame;
         
-        // 获取光标位置
-        CGRect cursorFrame = [m_textView caretRectForPosition:m_textView.selectedTextRange.end];
+        CGFloat targetOffsetY = contentOffset.y;
         
-        // 获取光标Y坐标
-        CGFloat currentCursorY = CGRectGetMinY(cursorFrame);
         
-        if (currentCursorY == m_originY) {
-            
-            if (currentCursorY == preCursorY) {
-                return;
-            }
-            
-            // 还原 inset
-            m_textView.textContainerInset = Regular_EdgeInset;
-            m_textView.shouldRejectSystemScroll = NO;
-            [m_textView setContentOffset:CGPointZero animated:YES];
-            m_textView.shouldRejectSystemScroll = YES;   // 不允许滚动
-            
-            
-            CGRect frame = m_textView.frame;
-            frame.size.height = m_textViewMinHeight;
-            m_textView.animating = YES;
-            [UIView animateWithDuration:0.25
-                                  delay:0
-                                options:UIViewAnimationOptionCurveEaseInOut |
-             UIViewAnimationOptionBeginFromCurrentState
-                             animations:^{
-                                 m_textView.frame = frame;
-                             }
-                             completion:^(BOOL finished) {
-                                 m_textView.animating = NO;
-                             }
-             ];
-            
+        if (inLastLine && textView.contentSize.height < 2 * _lineHeight) {
+            textView.textContainerInset = Regular_EdgeInset;
+            targetOffsetY = 0;
+            textViewframe.size.height = _textViewMinHeight;
+            _isMaxHeight = NO;
         }else{
-            
-            
-            // 不允许滚动
-            m_textView.shouldRejectSystemScroll = YES;
-            
-            // 第2，3，4，5，。。。。行
-            // 保存光标
-            
-            
-            [self.orderedSet addObject:@(currentCursorY)];
-            
-            
-            if (currentCursorY == preCursorY) {
-                return;
+            if (_isMaxHeight && _textView.shouldRejectSystemScroll == YES) {
+                [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(setTextViewDonotRejectSystemScroll) object:nil];
             }
-            
-            
-            static CGFloat textViewOffsetY = 0;
-            static CGFloat textViewCursorCenterY = 0;
-            
-            
-            
-            
-            CGFloat textViewContentHeight = m_textView.contentSize.height;
-            
-            textViewCursorCenterY = CGRectGetMidY(cursorFrame);
-            
-            
-            if (textViewCursorCenterY < m_maxLine *  m_cursorHeight + m_originY) {
-                
-                // 设置OffsetY为原始光标的Y值
-                textViewOffsetY = m_originY;
-                
-                // 更改当前offset
-                CGPoint offset = m_textView.contentOffset;
-                offset.y = textViewOffsetY;
-                CGRect frame = m_textView.frame;
-                
-//                if (offset.y + frame.size.height < m_textView.contentSize.height) {
-//                    
-//                }else{
-//                    
-//                }
-//                
-                
-                frame.size.height = textViewContentHeight - textViewOffsetY;
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    // 允许滚动
-                    m_textView.shouldRejectSystemScroll = NO;
-                    m_textView.animating = YES;
-                    [UIView animateWithDuration:0.25
-                                          delay:0
-                                        options:UIViewAnimationOptionCurveEaseInOut |
-                     UIViewAnimationOptionBeginFromCurrentState
-                                     animations:^{
-                                         m_textView.contentOffset = offset;
-                                         m_textView.frame = frame;
-                                     }completion:^(BOOL finished) {
-                                         m_textView.animating = NO;
-                                         //不允许滚动
-                                         m_textView.shouldRejectSystemScroll = YES;
-                                         if (textViewCursorCenterY > (m_maxLine - 1) *  m_cursorHeight + m_originY) {
-                                             [self setTextViewDonotRejectSystemScroll];
-                                         }
-                                         
-                                     } ];
-                });
-                
-            }else{
-                
+            _textView.shouldRejectSystemScroll = YES;
+            // 分3种情况
+            if (!UIEdgeInsetsEqualToEdgeInsets(textView.textContainerInset, UIEdgeInsetsZero)) {
+                textView.textContainerInset = UIEdgeInsetsZero;
+                cursorFrame = [textView caretRectForPosition:textView.selectedTextRange.end];
+            }
 
-                m_textView.shouldRejectSystemScroll = YES;
-                // fix m_textViewMaxHeight
-                CGFloat newOffset = CGRectGetMaxY(cursorFrame) - m_textView.frame.size.height;
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                    // 允许滚动
-                    m_textView.shouldRejectSystemScroll = NO;
-                    m_textView.animating = YES;
-                    CGPoint offset = m_textView.contentOffset;
-                    offset.y = newOffset;
-                    [UIView animateWithDuration:0.25
-                                          delay:0
-                                        options:UIViewAnimationOptionCurveEaseInOut |
-                     UIViewAnimationOptionBeginFromCurrentState
-                                     animations:^{
-                                         m_textView.contentOffset = offset;
-                                     }completion:^(BOOL finished) {
-                                         m_textView.animating = NO;
-                                         //不允许滚动
-                                         m_textView.shouldRejectSystemScroll = YES;
-                                         
-                                     } ];
-                });
+            if (CGRectGetMinY(cursorFrame) +1 < textView.contentOffset.y) { // 光标偶尔突破0.5个点
+                // 光标在 可见区域 上面
+                // 出现这种情况只有 大于 5 行，发生了滚动才会存在
+                targetOffsetY = CGRectGetMinY(cursorFrame);
+                _isMaxHeight = YES;
                 
+            } else if (CGRectGetMaxY(cursorFrame) -1 > textView.contentOffset.y + textViewframe.size.height) {
+                // 光标在可视区域下方，往上滚动
+
+                if(CGRectGetMaxY(cursorFrame) > _maxLine * cursorFrame.size.height){
+                    targetOffsetY = CGRectGetMaxY(cursorFrame) - textViewframe.size.height;
+                    _isMaxHeight = YES;
+                    
+                }else{
+                    targetOffsetY = 0;
+                    textViewframe.size.height = textView.contentSize.height;
+                    _isMaxHeight = NO;
+                }
                 
+            } else {
+                
+                if (textView.contentSize.height > _maxLine * cursorFrame.size.height) {
+                    CGFloat distance = textView.contentSize.height - textView.contentOffset.y;
+                    if (distance < textViewframe.size.height) {
+                        targetOffsetY = textView.contentSize.height - textViewframe.size.height;
+                    }else{
+                        
+                    }
+                    _isMaxHeight = YES;
+                }else{
+                    
+                    targetOffsetY = 0;
+                    textViewframe.size.height = textView.contentSize.height;
+                    _isMaxHeight = NO;
+                }
                 
             }
+            
         }
-        
-        preCursorY = currentCursorY;
-        
+        _textView.shouldRejectSystemScroll = NO;
+        _textView.animating = YES;
+        CGPoint offset = _textView.contentOffset;
+        offset.y = targetOffsetY;
+        [UIView animateWithDuration:0.25
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseInOut |
+         UIViewAnimationOptionBeginFromCurrentState
+                         animations:^{
+                             _textView.contentOffset = offset;
+                             _textView.frame = textViewframe;
+                         }
+                         completion:^(BOOL finished) {
+                             _textView.shouldRejectSystemScroll = YES;
+                             _textView.animating = NO;
+                             [self performSelector:@selector(setTextViewDonotRejectSystemScroll) withObject:nil afterDelay:0.8];
+                         }
+         ];
     }
 }
-
-
 // 还原textView系统控制
 - (void)setTextViewDonotRejectSystemScroll{
-    m_textView.shouldRejectSystemScroll = NO;
+    if (_isMaxHeight) {
+        _textView.shouldRejectSystemScroll = NO;
+    }
 }
-
 - (BOOL)textView:(MMTextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text{
-    if ([text isEqualToString:@"\n"]){ //判断输入的字是否是回车，即按下return
+    if ([text isEqualToString:@"\n"]){
         //在这里做你响应return键的代码
-        //        [m_textView resignFirstResponder];
         if (textView.isAnimating) {
             return NO;
         }
-        //这里返回NO，就代表return键值失效，即页面上按下return，不会出现换行，如果为yes，则输入页面会换行
     }
-    
     return YES;
-}
-
-- (void)scrollCaretVisibleAnimated:(BOOL)animated {
-    if (CGRectIsEmpty(m_textView.bounds)) {
-        return;
-    }
-    
-    CGRect caretRect = [m_textView caretRectForPosition:m_textView.selectedTextRange.end];
-    CGFloat contentOffsetY = m_textView.contentOffset.y;
-    
-    if (CGRectGetMinY(caretRect) == m_textView.contentOffset.y + m_textView.textContainerInset.top) {
-        // 命中这个条件说明已经不用调整了，直接 return，避免继续走下面的判断，会重复调整，导致光标跳动
-        return;
-    }
-    
-    if (CGRectGetMinY(caretRect) < m_textView.contentOffset.y + m_textView.textContainerInset.top) {
-        // 光标在可视区域上方，往下滚动
-        contentOffsetY = CGRectGetMinY(caretRect) - m_textView.textContainerInset.top - m_textView.contentInset.top;
-        
-    } else if (CGRectGetMaxY(caretRect) > m_textView.contentOffset.y + CGRectGetHeight(self.bounds) - m_textView.textContainerInset.bottom - m_textView.contentInset.bottom) {
-        // 光标在可视区域下方，往上滚动
-        contentOffsetY = CGRectGetMaxY(caretRect) - CGRectGetHeight(self.bounds) + m_textView.textContainerInset.bottom + m_textView.contentInset.bottom;
-    } else {
-        // 光标在可视区域内，不用调整
-        return;
-    }
-    
-    [UIView animateWithDuration:0.25
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseInOut |
-     UIViewAnimationOptionBeginFromCurrentState
-                     animations:^{
-                         [m_textView setContentOffset:CGPointMake(m_textView.contentOffset.x, contentOffsetY) animated:NO];
-                     }completion:^(BOOL finished) {
-                         m_textView.animating = NO;
-                         //不允许滚动
-                         m_textView.shouldRejectSystemScroll = YES;
-
-                     } ];
-
-    
-    
-}
-
-
-- (CGFloat)nextTextViewOffsetY:(CGFloat)contentOffsetY{
-    
-    
-    //    NSUInteger index =  [self.orderedSet indexOfObject:@(contentOffsetY) inSortedRange:NSMakeRange(0, self.orderedSet.count) options:NSBinarySearchingInsertionIndex usingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
-    //        return [obj1 compare:obj2];
-    //    }];
-    
-    NSUInteger index = [self.orderedSet indexOfObject:@(contentOffsetY)];
-    CGFloat newOffsetY = [[self.orderedSet objectAtIndex:index - (m_maxLine - 1)] floatValue];
-    return newOffsetY;
-}
-
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
-    if ([keyPath isEqualToString:@"cursorY"]) {
-        NSLog(@"加入：%@",change[NSKeyValueChangeNewKey]);
-        [self.orderedSet addObject:change[NSKeyValueChangeNewKey]];
-    } else {
-        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
-    }
 }
 
 @end

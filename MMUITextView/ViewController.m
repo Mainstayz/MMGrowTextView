@@ -27,7 +27,7 @@
  */
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.textView = [[MMGrowTextView alloc] initWithFrame:CGRectMake(40, 100, self.view.bounds.size.width - 80, 44)];
+    self.textView = [[MMGrowTextView alloc] initWithFrame:CGRectMake(40, 100, self.view.bounds.size.width - 80, 300)];
     self.textView.backgroundColor = [UIColor grayColor];
     [self.view addSubview:self.textView];
 }
