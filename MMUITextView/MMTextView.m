@@ -21,7 +21,6 @@
         _point = contentOffset;
         [super setContentOffset:contentOffset animated:animated];
     }else {
-        NSLog(@"屏蔽系统滚动：%@",NSStringFromCGPoint(contentOffset));
         [super setContentOffset:_point animated:animated];
     }
 }
@@ -31,7 +30,6 @@
         _point = contentOffset;
         [super setContentOffset:contentOffset];
     }else {
-        NSLog(@"屏蔽系统滚动：%@",NSStringFromCGPoint(contentOffset));
         [super setContentOffset:_point];
     }
 }
