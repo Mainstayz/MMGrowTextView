@@ -13,6 +13,9 @@
 		85C85CF41F58F26E00848E84 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 85C85CF21F58F26E00848E84 /* Main.storyboard */; };
 		85C85CF61F58F26E00848E84 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 85C85CF51F58F26E00848E84 /* Assets.xcassets */; };
 		85C85CF91F58F26E00848E84 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 85C85CF71F58F26E00848E84 /* LaunchScreen.storyboard */; };
+		85C85D021F58F29800848E84 /* MMUITextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 85C85D011F58F29800848E84 /* MMUITextView.m */; };
+		85C85D051F5910F600848E84 /* MMGrowTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 85C85D041F5910F600848E84 /* MMGrowTextView.m */; };
+		85C85D081F59123400848E84 /* MMTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 85C85D071F59123400848E84 /* MMTextView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +29,12 @@
 		85C85CF51F58F26E00848E84 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		85C85CF81F58F26E00848E84 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		85C85CFA1F58F26E00848E84 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		85C85D001F58F29800848E84 /* MMUITextView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMUITextView.h; sourceTree = "<group>"; };
+		85C85D011F58F29800848E84 /* MMUITextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MMUITextView.m; sourceTree = "<group>"; };
+		85C85D031F5910F600848E84 /* MMGrowTextView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMGrowTextView.h; sourceTree = "<group>"; };
+		85C85D041F5910F600848E84 /* MMGrowTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MMGrowTextView.m; sourceTree = "<group>"; };
+		85C85D061F59123400848E84 /* MMTextView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMTextView.h; sourceTree = "<group>"; };
+		85C85D071F59123400848E84 /* MMTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MMTextView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +76,12 @@
 				85C85CF71F58F26E00848E84 /* LaunchScreen.storyboard */,
 				85C85CFA1F58F26E00848E84 /* Info.plist */,
 				85C85CE91F58F26E00848E84 /* Supporting Files */,
+				85C85D001F58F29800848E84 /* MMUITextView.h */,
+				85C85D011F58F29800848E84 /* MMUITextView.m */,
+				85C85D061F59123400848E84 /* MMTextView.h */,
+				85C85D071F59123400848E84 /* MMTextView.m */,
+				85C85D031F5910F600848E84 /* MMGrowTextView.h */,
+				85C85D041F5910F600848E84 /* MMGrowTextView.m */,
 			);
 			path = MMUITextView;
 			sourceTree = "<group>";
@@ -110,7 +125,7 @@
 				TargetAttributes = {
 					85C85CE51F58F26E00848E84 = {
 						CreatedOnToolsVersion = 8.3.3;
-						DevelopmentTeam = PXL86E7953;
+						DevelopmentTeam = J6FBY8RMTU;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -152,6 +167,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				85C85CF11F58F26E00848E84 /* ViewController.m in Sources */,
+				85C85D081F59123400848E84 /* MMTextView.m in Sources */,
+				85C85D021F58F29800848E84 /* MMUITextView.m in Sources */,
+				85C85D051F5910F600848E84 /* MMGrowTextView.m in Sources */,
 				85C85CEE1F58F26E00848E84 /* AppDelegate.m in Sources */,
 				85C85CEB1F58F26E00848E84 /* main.m in Sources */,
 			);
@@ -273,7 +291,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = PXL86E7953;
+				DEVELOPMENT_TEAM = J6FBY8RMTU;
 				INFOPLIST_FILE = MMUITextView/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.unkown.MMUITextView;
@@ -285,7 +303,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = PXL86E7953;
+				DEVELOPMENT_TEAM = J6FBY8RMTU;
 				INFOPLIST_FILE = MMUITextView/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.unkown.MMUITextView;
